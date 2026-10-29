@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: file:./dev.db
+  AUTH_SECRET: ci-secret-no-usar-en-produccion-0123456789abcdef
+  AUTH_TRUST_HOST: "true"
+  SEED_ADMIN_EMAIL: admin@estructurar.co
+  SEED_ADMIN_PASSWORD: Admin123*
+  SEED_ADVISOR_PASSWORD: Asesor123*
+  CI: "true"
+
+jobs:
+  quality:
+    name: Lint · Typecheck · Unit · Build · E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci --include=dev
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Pruebas unitarias (motor de precios y cotizador)
+        run: npm test
+
+      - name: Build de producción
+        run: npm run build
+
+      # El build genera el cliente Prisma para PostgreSQL; para las E2E se usa SQLite,
+      # así que se regenera el cliente con el esquema local y se siembra Nórtiko.
+      - name: Base de datos local sembrada
+        run: npm run db:local:reset
+
+      - name: Navegadores de Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Pruebas E2E (smoke)
+        run: npm run test:e2e
+
+      - name: Reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

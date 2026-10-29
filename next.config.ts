@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Renderizado dinámico convencional: la app depende de sesión y base de datos
+  // en casi todas las rutas, por lo que no activamos cacheComponents.
+  serverExternalPackages: ["@react-pdf/renderer", "@prisma/client", "bcryptjs"],
   turbopack: {
     rules: {
       "*.css": {
@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
 };
 

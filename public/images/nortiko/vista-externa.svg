@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1f2a"/>
+      <stop offset="1" stop-color="#14434f"/>
+    </linearGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1f3a44"/>
+      <stop offset="1" stop-color="#0e2730"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1250" cy="180" r="70" fill="#e0b45a" opacity="0.85"/>
+  <path d="M0 640 Q 300 520 600 600 T 1200 560 T 1600 620 V 900 H 0 Z" fill="#163b33"/>
+  <g>
+    <rect x="620" y="140" width="200" height="560" fill="url(#tower)"/>
+    <rect x="860" y="260" width="150" height="440" fill="#13303a" opacity="0.9"/>
+    <rect x="440" y="300" width="150" height="400" fill="#13303a" opacity="0.8"/>
+    <g fill="#e0b45a" opacity="0.7">
+      <rect x="640" y="170" width="24" height="18"/><rect x="690" y="170" width="24" height="18"/><rect x="740" y="170" width="24" height="18"/>
+      <rect x="640" y="230" width="24" height="18"/><rect x="740" y="230" width="24" height="18"/>
+      <rect x="690" y="290" width="24" height="18"/><rect x="790" y="290" width="24" height="18"/>
+      <rect x="640" y="350" width="24" height="18"/><rect x="690" y="350" width="24" height="18"/><rect x="790" y="350" width="24" height="18"/>
+      <rect x="740" y="410" width="24" height="18"/><rect x="640" y="470" width="24" height="18"/><rect x="790" y="470" width="24" height="18"/>
+      <rect x="690" y="530" width="24" height="18"/><rect x="740" y="590" width="24" height="18"/>
+    </g>
+  </g>
+  <text x="80" y="820" font-family="Inter, Arial, sans-serif" font-size="56" fill="#ffffff" font-weight="600">N�rtiko</text>
+  <text x="80" y="860" font-family="Inter, Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.7">Render de referencia � reemplazar por imagen oficial</text>
+</svg>

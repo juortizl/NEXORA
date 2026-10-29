@@ -1,0 +1,380 @@
+// Esquema multiproyecto. Sin enums ni Json nativos para que el mismo esquema
+// funcione en PostgreSQL (producción) y SQLite (desarrollo local).
+// Los valores tipo enum se validan con zod en src/lib/domain.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  website   String?
+  phone     String?
+  logoUrl   String?
+  createdAt DateTime  @default(now())
+  users     User[]
+  projects  Project[]
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  passwordHash String
+  role         String        @default("ASESOR") // ADMIN | GERENTE_COMERCIAL | ASESOR
+  active       Boolean       @default(true)
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  createdAt    DateTime      @default(now())
+  leads        Lead[]
+  quotes       Quote[]
+  reservations Reservation[]
+  sales        Sale[]
+  auditLogs    AuditLog[]
+}
+
+model Project {
+  id               String    @id @default(cuid())
+  companyId        String
+  company          Company   @relation(fields: [companyId], references: [id])
+  slug             String    @unique
+  name             String
+  tagline          String?
+  description      String?
+  city             String?
+  address          String?
+  latitude         Float?
+  longitude        Float?
+  stage            String    @default("LANZAMIENTO") // PREVENTA | LANZAMIENTO | CONSTRUCCION | ENTREGA
+  priceValidUntil  DateTime?
+  deliveryDate     DateTime?
+  primaryColor     String    @default("#0f172a")
+  secondaryColor   String    @default("#1e3a5f")
+  accentColor      String    @default("#c9a227")
+  logoUrl          String?
+  heroImageUrl     String?
+  // Parámetros financieros por defecto del cotizador
+  separationAmount Float     @default(2000000)
+  downPaymentPct   Float     @default(0.3)
+  downPaymentMonths Int      @default(36)
+  annualRate       Float     @default(0.12)
+  loanYears        Int       @default(20)
+  // Modelo 3D del conjunto (GLB optimizado). Si es null, el visor usa el modo paramétrico.
+  siteModelUrl     String?
+  publicToken      String    @unique @default(cuid())
+  settings         String?   // JSON libre (textos de campaña, hitos, etc.)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  towers        Tower[]
+  typologies    Typology[]
+  units         Unit[]
+  priceRules    PriceRule[]
+  amenities     Amenity[]
+  pois          PointOfInterest[]
+  mediaAssets   MediaAsset[]
+  buyers        Buyer[]
+  leads         Lead[]
+  quotes        Quote[]
+  presentations Presentation[]
+  auditLogs     AuditLog[]
+}
+
+model Tower {
+  id                    String  @id @default(cuid())
+  projectId             String
+  project               Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  code                  String // T1
+  name                  String
+  floors                Int
+  unitsPerFloor         Int
+  firstResidentialFloor Int     @default(1)
+  floorHeight           Float   @default(2.8)
+  // Geometría paramétrica (metros) usada cuando no hay modelo GLB
+  footprintWidth        Float   @default(32)
+  footprintDepth        Float   @default(18)
+  positionX             Float   @default(0)
+  positionZ             Float   @default(0)
+  rotationY             Float   @default(0)
+  modelNodeName         String? // nombre del nodo en el GLB
+  releaseStatus         String  @default("EN_VENTA") // EN_VENTA | PROXIMAMENTE | ENTREGADA
+  units                 Unit[]
+
+  @@unique([projectId, code])
+}
+
+model Typology {
+  id               String  @id @default(cuid())
+  projectId        String
+  project          Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  code             String // A, B, C
+  name             String
+  description      String?
+  builtArea        Float
+  privateArea      Float
+  bedrooms         Int
+  bathrooms        Int
+  basePrice        Float
+  color            String  @default("#64748b")
+  floorPlanUrl     String?
+  interiorModelUrl String?
+  features         String  @default("[]") // JSON string[]
+  variants         String  @default("[]") // JSON {name, deltaPrice, description}[]
+  units            Unit[]
+  mediaAssets      MediaAsset[]
+
+  @@unique([projectId, code])
+}
+
+model Unit {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  towerId       String
+  tower         Tower    @relation(fields: [towerId], references: [id], onDelete: Cascade)
+  typologyId    String
+  typology      Typology @relation(fields: [typologyId], references: [id])
+  floor         Int
+  position      Int
+  code          String // T1-1204
+  status        String   @default("DISPONIBLE") // DISPONIBLE | SEPARADO | VENDIDO | BLOQUEADO
+  listPrice     Float
+  priceOverride Float?
+  orientation   String? // NORTE | SUR | ORIENTE | OCCIDENTE
+  viewTag       String? // QUITASOL | COPACABANA | INTERIOR
+  modelNodeName String?
+  notes         String?
+  updatedAt     DateTime @updatedAt
+
+  quotes       Quote[]
+  reservations Reservation[]
+  sale         Sale?
+  leads        Lead[]
+
+  @@unique([towerId, floor, position])
+  @@unique([projectId, code])
+  @@index([projectId, status])
+}
+
+model PriceRule {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  kind      String // FLOOR_INCREMENT | VIEW_PREMIUM | POSITION_PREMIUM | TYPOLOGY_ADJUST
+  label     String
+  value     Float
+  isPercent Boolean   @default(true)
+  criteria  String    @default("{}") // JSON: {fromFloor, viewTag, positions:[], typologyCode}
+  validFrom DateTime?
+  validTo   DateTime?
+  active    Boolean   @default(true)
+  order     Int       @default(0)
+}
+
+model Amenity {
+  id          String  @id @default(cuid())
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  icon        String?
+  imageUrl    String?
+  zone        String? // CLUB_HOUSE | TERRAZA | URBANISMO
+  order       Int     @default(0)
+}
+
+model PointOfInterest {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  category  String // TRANSPORTE | COMERCIO | SALUD | EDUCACION | DEPORTE | OTRO
+  minutes   Int
+  mode      String  @default("CARRO") // CARRO | PIE
+  group     String  @default("SECTOR") // SECTOR | CIUDAD | FUTURO
+  latitude  Float?
+  longitude Float?
+  order     Int     @default(0)
+}
+
+model MediaAsset {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  typologyId String?
+  typology   Typology? @relation(fields: [typologyId], references: [id])
+  kind       String // RENDER | PLANTA | FOTO | LOGO | MODELO | PDF | VIDEO
+  title      String
+  url        String
+  order      Int       @default(0)
+  createdAt  DateTime  @default(now())
+}
+
+model Buyer {
+  id              String    @id @default(cuid())
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String
+  documentType    String    @default("CC")
+  documentNumber  String?
+  email           String?
+  phone           String?
+  address         String?
+  city            String?
+  occupation      String?
+  monthlyIncome   Float?
+  consentAccepted Boolean   @default(false)
+  consentAt       DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  leads        Lead[]
+  quotes       Quote[]
+  reservations Reservation[]
+  sales        Sale[]
+  documents    BuyerDocument[]
+
+  @@index([projectId, documentNumber])
+}
+
+model BuyerDocument {
+  id        String   @id @default(cuid())
+  buyerId   String
+  buyer     Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  name      String
+  kind      String   @default("OTRO") // CEDULA | INGRESOS | PROMESA | OTRO
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id           String    @id @default(cuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  buyerId      String
+  buyer        Buyer     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  unitId       String?
+  unit         Unit?     @relation(fields: [unitId], references: [id])
+  advisorId    String
+  advisor      User      @relation(fields: [advisorId], references: [id])
+  stage        String    @default("LEAD") // LEAD | VISITA | COTIZADO | SEPARADO | PROMESA | ESCRITURADO | PERDIDO
+  source       String? // SALA_VENTAS | WEB | REFERIDO | REDES | FERIA
+  notes        String?
+  nextAction   String?
+  nextActionAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tasks        LeadTask[]
+
+  @@index([projectId, stage])
+}
+
+model LeadTask {
+  id        String    @id @default(cuid())
+  leadId    String
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title     String
+  dueAt     DateTime?
+  done      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+
+model Quote {
+  id                 String    @id @default(cuid())
+  projectId          String
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  unitId             String
+  unit               Unit      @relation(fields: [unitId], references: [id])
+  buyerId            String?
+  buyer              Buyer?    @relation(fields: [buyerId], references: [id])
+  advisorId          String
+  advisor            User      @relation(fields: [advisorId], references: [id])
+  version            Int       @default(1)
+  listPrice          Float
+  discount           Float     @default(0)
+  variantsTotal      Float     @default(0)
+  finalPrice         Float
+  separation         Float
+  downPaymentPct     Float
+  downPaymentTotal   Float
+  downPaymentMonths  Int
+  downPaymentMonthly Float
+  subsidy            Float     @default(0)
+  loanAmount         Float
+  annualRate         Float
+  loanYears          Int
+  loanMonthly        Float
+  selectedVariants   String    @default("[]") // JSON string[]
+  notes              String?
+  pdfUrl             String?
+  validUntil         DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@index([projectId, unitId])
+}
+
+model Reservation {
+  id        String    @id @default(cuid())
+  unitId    String
+  unit      Unit      @relation(fields: [unitId], references: [id])
+  buyerId   String
+  buyer     Buyer     @relation(fields: [buyerId], references: [id])
+  advisorId String
+  advisor   User      @relation(fields: [advisorId], references: [id])
+  amount    Float
+  status    String    @default("ACTIVA") // ACTIVA | CANCELADA | CONVERTIDA
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([unitId, status])
+}
+
+model Sale {
+  id        String    @id @default(cuid())
+  unitId    String    @unique
+  unit      Unit      @relation(fields: [unitId], references: [id])
+  buyerId   String
+  buyer     Buyer     @relation(fields: [buyerId], references: [id])
+  advisorId String
+  advisor   User      @relation(fields: [advisorId], references: [id])
+  price     Float
+  status    String    @default("PROMESA") // PROMESA | ESCRITURADO
+  signedAt  DateTime  @default(now())
+  createdAt DateTime  @default(now())
+}
+
+model Presentation {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  isDefault Boolean  @default(false)
+  blocks    String   @default("[]") // JSON PresentationBlock[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  entity    String
+  entityId  String
+  action    String
+  diff      String?
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}

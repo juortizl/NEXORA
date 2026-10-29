@@ -1,0 +1,61 @@
+# Blueprint de Render para la Plataforma de visualización y ventas inmobiliarias.
+# Despliegue: Dashboard de Render → New → Blueprint → seleccionar este repositorio.
+#
+# Notas:
+# - El servidor Next.js escucha en 0.0.0.0:$PORT (ver script `start` en package.json).
+# - El filesystem de Render es efímero: modelos GLB, renders y PDFs deben vivir en
+#   object storage (R2/S3) o en URLs públicas; la base de datos sólo guarda la URL.
+# - El esquema se sincroniza con `prisma db push` en el pre-deploy (sin pérdida de datos).
+# - Para cargar los datos de demostración de Nórtiko ejecuta una sola vez
+#   `npm run db:seed` desde la Shell del servicio (o define SEED_ON_DEPLOY=1).
+
+databases:
+  - name: plataforma-db
+    plan: basic-256mb
+    region: oregon
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: plataforma-inmobiliaria
+    runtime: node
+    region: oregon
+    plan: starter
+    # --include=dev: el build necesita typescript, prisma CLI y tailwind (devDependencies)
+    buildCommand: npm ci --include=dev && npm run build
+    preDeployCommand: npx prisma db push --skip-generate && node scripts/seed-if-requested.mjs
+    startCommand: npm start
+    healthCheckPath: /login
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: plataforma-db
+          property: connectionString
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      # Credenciales iniciales del seed (cámbialas tras el primer ingreso)
+      - key: SEED_ADMIN_EMAIL
+        value: admin@estructurar.co
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_ADVISOR_PASSWORD
+        sync: false
+      # Pon "1" en el primer despliegue para sembrar Nórtiko; luego vuelve a "0".
+      - key: SEED_ON_DEPLOY
+        value: "0"
+      # Object storage (opcional): GLB, renders y PDFs
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: STORAGE_BUCKET
+        sync: false
+      - key: STORAGE_ACCESS_KEY
+        sync: false
+      - key: STORAGE_SECRET_KEY
+        sync: false
+      - key: STORAGE_PUBLIC_URL
+        sync: false

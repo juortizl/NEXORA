@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14434f"/>
+      <stop offset="1" stop-color="#0b1f2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g)"/>
+  <ellipse cx="800" cy="620" rx="520" ry="160" fill="#1f5c66"/>
+  <ellipse cx="800" cy="600" rx="420" ry="110" fill="#38bdf8" opacity="0.75"/>
+  <ellipse cx="800" cy="590" rx="380" ry="90" fill="#7dd3fc" opacity="0.5"/>
+  <g fill="#163b33">
+    <circle cx="260" cy="420" r="90"/><rect x="245" y="420" width="30" height="160"/>
+    <circle cx="1340" cy="400" r="100"/><rect x="1325" y="400" width="30" height="180"/>
+    <circle cx="1180" cy="470" r="60"/><rect x="1170" y="470" width="20" height="110"/>
+  </g>
+  <rect x="520" y="300" width="560" height="60" rx="8" fill="#e0b45a" opacity="0.9"/>
+  <text x="800" y="340" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="30" fill="#0b1f2a" font-weight="600">Zona recreativa � Piscina y sol�rium</text>
+  <text x="80" y="860" font-family="Inter, Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.7">Render de referencia � reemplazar por imagen oficial</text>
+</svg>

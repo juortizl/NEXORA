@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <rect width="1600" height="900" fill="#0b1f2a"/>
+  <g stroke="#14434f" stroke-width="2" opacity="0.6">
+    <path d="M0 150 H1600 M0 300 H1600 M0 450 H1600 M0 600 H1600 M0 750 H1600"/>
+    <path d="M200 0 V900 M400 0 V900 M600 0 V900 M800 0 V900 M1000 0 V900 M1200 0 V900 M1400 0 V900"/>
+  </g>
+  <path d="M120 180 L820 120 L1480 260 L1380 760 L560 820 L160 620 Z" fill="#163b33" stroke="#e0b45a" stroke-width="6" stroke-dasharray="18 10"/>
+  <path d="M0 700 Q 400 640 800 690 T 1600 660" stroke="#38bdf8" stroke-width="18" fill="none" opacity="0.6"/>
+  <text x="800" y="470" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="46" fill="#ffffff" font-weight="600">Lote N�rtiko</text>
+  <text x="800" y="520" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" fill="#e0b45a">Autopista Norte � Bello / Copacabana</text>
+  <text x="80" y="860" font-family="Inter, Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.7">Esquema de referencia � reemplazar por fotograf�a a�rea</text>
+</svg>
